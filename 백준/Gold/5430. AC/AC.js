@@ -30,11 +30,14 @@ for (let t = 0; t < T; t++) {
     if (p[i] === 'R') {
       isReversed = !isReversed;
     } else if (p[i] === 'D') {
+      // 배열의 유효범위가 벗어나면 실행
       if (frontIndex > backIndex) {
         console.log('error');
         isError = true;
         break;
       }
+
+      // 실제로 뒤집지 않고 인덱스만 증가시키고, 감소 시킨 걸 마지막에  slice해서 한 번만 실행
       if (!isReversed) {
         frontIndex++;
       } else {
