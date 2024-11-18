@@ -4,8 +4,8 @@ const input = fs.readFileSync('dev/stdin').toString().trim().split('\n');
 const scheduleRows = input.slice(1).map((row) => row.split(' ').map(Number));
 
 const areaCalculator = (rows) => {
-  // 날짜의 범위는 365일로 고정이므로 범위를 최대치로 설정합니다.
-  const calendar = new Array(366).fill(0);
+  // 날짜의 범위는  1일부터 시작해서 366. 윤년 생각하면 367?
+  const calendar = Array.from({ length: 366 }, () => 0);
 
   // 일정이 있는 날마다 높이를 증가시킵니다.
   rows.forEach(([start, end]) => {
