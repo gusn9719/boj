@@ -2,59 +2,73 @@ const fs = require('fs');
 const input = fs.readFileSync('dev/stdin').toString().trim().split('\n');
 
 const [N, M] = input[0].split(' ').map(Number);
-let map = input.slice(1).map((line) => line.trim().split(' ').map(Number));
+const map = input.slice(1).map((line) => line.trim().split(' ').map(Number));
 
 const directions = [
-  [-1, 0], // 위
-  [1, 0], // 아래
-  [0, -1], // 왼쪽
-  [0, 1], // 오른쪽
+  [-1, 0],
+  [1, 0],
+  [0, -1],
+  [0, 1],
 ];
 
-// 빙산이 녹는 함수
-function meltIce(map) {
-  const newMap = map.map((row) => [...row]); // 복제 배열 생성
-
-  for (let y = 0; y < N; y++) {
-    for (let x = 0; x < M; x++) {
-      if (map[y][x] > 0) {
-        let meltCount = 0;
-
-        // 주변 0의 개수 계산
-        for (const [dy, dx] of directions) {
-          const ny = y + dy;
-          const nx = x + dx;
-          if (ny >= 0 && ny < N && nx >= 0 && nx < M && map[ny][nx] === 0) {
-            meltCount++;
-          }
-        }
-
-        // 녹은 결과 적용
-        newMap[y][x] = Math.max(0, map[y][x] - meltCount);
-      }
+let icePositions = [];
+for (let y = 0; y < N; y++) {
+  for (let x = 0; x < M; x++) {
+    if (map[y][x] > 0) {
+      icePositions.push([y, x]);
     }
   }
-
-  return newMap;
 }
 
-function countIce(map) {
-  const visited = Array.from({ length: N }, () => Array(M).fill(false));
-  let iceCount = 0;
+const meltIce = () => {
+  const newIcePositions = [];
+  const meltAmounts = Array(icePositions.length).fill(0);
 
-  const dfs = (y, x) => {
-    visited[y][x] = true;
+  for (let i = 0; i < icePositions.length; i++) {
+    const [y, x] = icePositions[i];
+    let meltCount = 0;
 
     for (const [dy, dx] of directions) {
       const ny = y + dy;
       const nx = x + dx;
+      if (ny >= 0 && ny < N && nx >= 0 && nx < M && map[ny][nx] === 0) {
+        meltCount++;
+      }
+    }
+    meltAmounts[i] = meltCount;
+  }
+
+  for (let i = 0; i < icePositions.length; i++) {
+    const [y, x] = icePositions[i];
+    map[y][x] = Math.max(0, map[y][x] - meltAmounts[i]);
+
+    if (map[y][x] > 0) {
+      newIcePositions.push([y, x]);
+    }
+  }
+
+  icePositions = newIcePositions;
+};
+
+const countIceland = () => {
+  const visited = new Set();
+  let iceCount = 0;
+
+  const dfs = (y, x) => {
+    const key = y * M + x;
+    visited.add(key);
+
+    for (const [dy, dx] of directions) {
+      const ny = y + dy;
+      const nx = x + dx;
+      const nKey = ny * M + nx;
 
       if (
         ny >= 0 &&
         ny < N &&
         nx >= 0 &&
         nx < M &&
-        !visited[ny][nx] &&
+        !visited.has(nKey) &&
         map[ny][nx] > 0
       ) {
         dfs(ny, nx);
@@ -62,36 +76,33 @@ function countIce(map) {
     }
   };
 
-  for (let y = 0; y < N; y++) {
-    for (let x = 0; x < M; x++) {
-      if (map[y][x] > 0 && !visited[y][x]) {
-        iceCount++;
-        dfs(y, x); // 새로운 섬 탐색 시작
-      }
+  for (const [y, x] of icePositions) {
+    const key = y * M + x;
+    if (!visited.has(key)) {
+      iceCount++;
+      dfs(y, x);
     }
   }
 
   return iceCount;
-}
+};
 
-// 전체 시뮬레이션
-function solve() {
-  let year = 0;
+let year = 0;
 
-  while (true) {
-    const iceCount = countIce(map);
+while (true) {
+  const iceCount = countIceland();
 
-    if (iceCount >= 2) {
-      return year; // 섬이 2개 이상으로 분리되면 종료
-    }
-
-    if (iceCount === 0) {
-      return 0; // 빙산이 다 녹았다면 0 출력
-    }
-
-    map = meltIce(map); // 빙산 녹이기
-    year++;
+  if (iceCount >= 2) {
+    break;
   }
+
+  if (icePositions.length === 0) {
+    year = 0;
+    break;
+  }
+
+  meltIce();
+  year++;
 }
 
-console.log(solve());
+console.log(year);
