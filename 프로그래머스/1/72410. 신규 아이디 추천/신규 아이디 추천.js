@@ -8,10 +8,10 @@ function solution(new_id) {
   const step5 = step4.length === 0 ? 'a' : step4;
   const step6 =
     step5.length >= 16 ? step5.slice(0, 15).replace(/\.$/, '') : step5;
-  let step7 = step6;
-  while (step7.length < 3) {
-    step7 += step7[step7.length - 1];
-  }
+  const step7 =
+    step6.length < 3
+      ? step6 + step6[step6.length - 1].repeat(3 - step6.length)
+      : step6;
 
   answer = step7;
   return answer;
