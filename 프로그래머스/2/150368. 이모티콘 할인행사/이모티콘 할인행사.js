@@ -39,7 +39,6 @@ function solution(users, emoticons) {
             }
         }
 
-        // 결과 업데이트
         if (
             subscribers > maxSubscribers ||
             (subscribers === maxSubscribers && revenue > maxRevenue)
