@@ -11,7 +11,7 @@ dp[1][0] = 0;
 for (let i = 1; i < N; i++) {
   const [smallJump, bigJump] = jumpCosts[i - 1];
 
-  if (i + 3 <= N && dp[i][0] !== Infinity) {
+  if (i + 3 <= N) {
     dp[i + 3][1] = Math.min(dp[i + 3][1], dp[i][0] + K);
   }
 
