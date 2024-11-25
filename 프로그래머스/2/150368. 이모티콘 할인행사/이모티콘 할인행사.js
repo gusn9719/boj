@@ -52,11 +52,4 @@ function solution(users, emoticons) {
     return [maxSubscribers, maxRevenue];
 }
 
-// 예제 입력
-const users = [
-    [40, 10000],
-    [25, 10000],
-];
-const emoticons = [7000, 9000];
 
-console.log(solution(users, emoticons)); // [1, 5400]
