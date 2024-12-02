@@ -1,9 +1,6 @@
 const fs = require('fs');
 const input = fs.readFileSync('dev/stdin').toString().trim().split('\n');
 
-const T = Number(input[0]);
-let index = 1;
-
 const solve = function (N, M, K, houses) {
     let ans = 0;
     let currSum = 0;
