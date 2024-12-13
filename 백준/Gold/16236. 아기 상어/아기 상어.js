@@ -1,117 +1,95 @@
 const fs = require('fs');
 const input = fs.readFileSync('dev/stdin').toString().trim().split('\n');
-
 const N = +input[0];
-const space = input.slice(1).map((line) => line.split(' ').map(Number));
+const arr = input.slice(1).map((line) => line.split(' ').map(Number));
 
-let sharkX,
-  sharkY,
-  sharkSize = 2,
-  eatenCount = 0;
+let visited = Array.from(Array(N), () => Array(N).fill(0));
+let queue = [];
+let answer = 0;
 
-// 상어 시작 위치 찾기
+// 아기 상어 초기 위치 찾기
 for (let i = 0; i < N; i++) {
   for (let j = 0; j < N; j++) {
-    if (space[i][j] === 9) {
-      sharkX = i;
-      sharkY = j;
-      space[i][j] = 0; 
-      break;
+    if (arr[i][j] === 9) {
+      queue.push(i, j); // 아기 상어 위치를 큐에 [y, x] 순으로 삽입
     }
   }
 }
 
-let time = 0;
+const directions = [
+  [-1, 0],
+  [0, -1],
+  [0, 1],
+  [1, 0],
+];
 
-while (true) {
-  // BFS를 통해 먹을 수 있는 물고기 후보 찾기
-  const fish = bfsFindFish(space, N, sharkX, sharkY, sharkSize);
+let sharkSize = 2;
+let eatenCount = 0;
 
-  if (fish === null) {
-    // 더 이상 먹을 물고기 없음
-    break;
-  }
+let i = 0;
+let time = 1;
 
-  const { x, y, distance } = fish;
+while (i < queue.length) {
+  const canEat = [];
+  const length = queue.length;
 
-  // 물고기 먹기
-  space[x][y] = 0; // 물고기 먹은 자리 비우기
-  sharkX = x;
-  sharkY = y;
-  eatenCount += 1;
-  time += distance;
+  for (; i < length; ) {
+    const oy = queue[i++];
+    const ox = queue[i++];
 
-  // 상어 크기 증가 조건
-  if (eatenCount === sharkSize) {
-    sharkSize++;
-    eatenCount = 0;
-  }
-}
+    for (let d = 0; d < directions.length; d++) {
+      const [dy, dx] = directions[d];
+      const ny = oy + dy;
+      const nx = ox + dx;
 
-console.log(time);
+      // 범위 벗어나면 스킵
+      if (ny < 0 || ny >= N || nx < 0 || nx >= N) continue;
+      // 이미 방문했으면 스킵
+      if (visited[ny][nx] === 1) continue;
+      // 상어보다 큰 물고기 칸은 지나갈 수 없음
+      if (arr[ny][nx] !== 9 && arr[ny][nx] > sharkSize) continue;
 
-// BFS를 수행해 먹을 수 있는 물고기를 찾는 함수
-function bfsFindFish(space, N, startX, startY, sharkSize) {
-  const visited = Array.from({ length: N }, () => Array(N).fill(false));
-  const queue = [];
-  queue.push({ x: startX, y: startY, distance: 0 });
-  visited[startX][startY] = true;
-
-  // 상하좌우 탐색 방향
-  const directions = [
-    { dx: -1, dy: 0 },
-    { dx: 0, dy: -1 },
-    { dx: 0, dy: 1 },
-    { dx: 1, dy: 0 },
-  ];
-
-  // BFS로 찾은 먹을 수 있는 물고기들 저장
-  const candidates = [];
-
-  while (queue.length > 0) {
-    const { x, y, distance } = queue.shift();
-
-    for (const { dx, dy } of directions) {
-      const nx = x + dx;
-      const ny = y + dy;
-
-      // 범위 확인
-      if (nx < 0 || nx >= N || ny < 0 || ny >= N) continue;
-
-      if (!visited[nx][ny]) {
-        // 상어 크기보다 큰 물고기가 있는 칸은 아예 못 지나감
-        if (space[nx][ny] > sharkSize) continue;
-
-        visited[nx][ny] = true;
-        // 먹을 수 있는 물고기 발견 (상어 크기보다 작은 물고기)
-        if (space[nx][ny] !== 0 && space[nx][ny] < sharkSize) {
-          candidates.push({ x: nx, y: ny, distance: distance + 1 });
-          // 여기서 바로 return하지 않는 이유:
-          // BFS는 같은 거리에 있는 칸을 모두 탐색하므로
-          // 더 짧은 거리에 있는 먹을 수 있는 물고기가 있을 수도 있으니
-          // 현재 거리 수준에서는 계속 탐색을 이어간다.
-        }
-
-        // 먹지는 않지만 지나갈 수 있는 칸은 큐에 추가
-        queue.push({ x: nx, y: ny, distance: distance + 1 });
+      // 상어가 먹을 수 있는 물고기 발견
+      if (arr[ny][nx] !== 0 && arr[ny][nx] !== 9 && arr[ny][nx] < sharkSize) {
+        canEat.push([ny, nx]);
+        // 같은 레벨에서 발견했으므로 break
+        break;
       }
+
+      // 그냥 지나갈 수 있는 칸(빈 칸이거나 상어 크기와 같음)
+      queue.push(ny, nx);
+      visited[ny][nx] = 1;
     }
   }
 
-  if (candidates.length === 0) {
-    // 먹을 물고기가 없음
-    return null;
+  // BFS 한 레벨을 마친 뒤, 먹을 수 있는 물고기가 있으면
+  if (canEat.length) {
+    // 가장 위, 가장 왼쪽 기준으로 정렬
+    canEat.sort((a, b) => {
+      if (a[0] === b[0]) return a[1] - b[1];
+      return a[0] - b[0];
+    });
+
+    const [fishY, fishX] = canEat[0];
+    // BFS를 다시 시작하기 위해 i=0으로 초기화
+    i = 0;
+    answer = time; // 현재 레벨(거리)이 곧 상어가 물고기를 먹기까지 걸린 시간
+
+    // 상어가 그 물고기 위치로 이동
+    queue = [fishY, fishX];
+    visited = Array.from(Array(N), () => Array(N).fill(0));
+    arr[fishY][fishX] = 0; // 물고기 먹은 칸을 빈 칸으로 변경
+
+    // 상어 상태 갱신
+    eatenCount++;
+    if (eatenCount === sharkSize) {
+      sharkSize++;
+      eatenCount = 0;
+    }
   }
 
-  // 후보들 중 조건에 따라 물고기 선택
-  // 1. distance가 가장 작은 물고기
-  // 2. distance가 같다면 x(행)가 가장 작은
-  // 3. 그 중 y(열)가 가장 작은
-  candidates.sort((a, b) => {
-    if (a.distance !== b.distance) return a.distance - b.distance;
-    if (a.x !== b.x) return a.x - b.x;
-    return a.y - b.y;
-  });
-
-  return candidates[0]; // 가장 조건에 맞는 물고기 반환
+  // BFS 레벨(거리) 하나 끝났으니 time 증가
+  time++;
 }
+
+console.log(answer);
