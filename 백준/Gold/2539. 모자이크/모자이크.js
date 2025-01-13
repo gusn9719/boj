@@ -1,49 +1,43 @@
 const fs = require('fs');
-const input = fs.readFileSync('dev/stdin').toString().trim().split('\n');
+let input = fs.readFileSync('/dev/stdin').toString().trim().split('\n');
 
-// 입력 파싱
-const [height, width] = input[0].split(' ').map(Number); // 종이 크기
-const maxBoards = Number(input[1]); // 최대 색종이 개수
-const errorCount = Number(input[2]); // 오염된 구역의 수
+// 입력 처리
+const [rows, cols] = input[0].split(' ').map(Number);
+const maxBoards = Number(input[1]);
+const markerCount = Number(input[2]);
+const markers = input
+  .slice(3, 3 + markerCount)
+  .map((line) => line.split(' ').map(Number))
+  .sort((a, b) => a[1] - b[1]); // 열 기준 정렬
 
-const errors = []; // 오염된 구역 좌표
-let minSize = 0; // 초기 최소 크기
+let maxY = 0;
+markers.forEach(([y]) => {
+  maxY = Math.max(maxY, y); // 가장 큰 행 값 계산
+});
 
-// 오염된 구역 입력 처리
-for (let i = 0; i < errorCount; i++) {
-  const [y, x] = input[3 + i].split(' ').map(Number);
-  minSize = Math.max(minSize, y); // 가장 큰 행 값 기준으로 최소 크기 설정
-  errors.push(x);
-}
+let start = maxY;
+let end = rows;
+let result = Infinity;
 
-// 열 좌표 정렬
-errors.sort((a, b) => a - b);
-
-// 최소 크기 찾기
-while (true) {
-  let memory = errors[0];
+// 이분 탐색
+while (start <= end) {
+  const mid = Math.floor((start + end) / 2);
   let count = 1;
-  let fail = false;
+  let currentX = markers[0][1];
 
-  for (let loc of errors) {
-    // 현재 색종이로 덮을 수 없으면 다음 색종이로 이동
-    if (loc >= memory + minSize) {
-      memory = loc;
+  for (let i = 1; i < markers.length; i++) {
+    if (currentX + mid <= markers[i][1]) {
       count++;
-    }
-    // 색종이 개수를 초과하면 실패
-    if (count > maxBoards) {
-      fail = true;
-      break;
+      currentX = markers[i][1];
     }
   }
 
-  // 성공하면 최소 크기를 출력하고 종료
-  if (!fail) {
-    console.log(minSize);
-    break;
+  if (count <= maxBoards) {
+    result = mid;
+    end = mid - 1; // 더 작은 크기 탐색
+  } else {
+    start = mid + 1; // 더 큰 크기 탐색
   }
-
-  // 최소 크기 증가
-  minSize++;
 }
+
+console.log(result);
